@@ -1,0 +1,190 @@
+---
+title: "Analysis of Survival in Game of Throne (TV Show)"
+author: "Claire Dishman"
+format:
+  html:
+    theme: none
+    css: got_theme.css
+    toc: true
+    toc-title: "Table of Contents"
+    number-sections: false
+editor: visual
+---
+
+## About the Data 
+
+This data was originally compiled from the Game of Thrones television show for this research article:
+
+Lystad RP, Brown BT. “Death is certain, the time is not”: mortality and survival in *Game of Thrones*. *Injury Epidemiology* 2018;5:44.
+
+The data comes from seasons 1-8 and originally has two data sets within it: a character data set and an episode data set. However for this analysis, only the character data set was used. The character data set contains 359 observations (characters) and 35 variables, including information about sociodemographics, exposures, and mortality.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(tidyverse)
+library(gtsummary)
+library(dplyr)
+library (gt)
+
+got <- read_csv(here::here("data","GoT_dataset","character_data_S01-S08.csv"))
+
+#labeling the values in the dataset
+got$sex <- factor(got$sex,
+											levels = c(1, 2, 9),
+											labels = c("Male", "Female", "Unknown"))
+got$religion <- factor(got$religion,
+									levels = c(1, 2, 3, 4, 5, 6, 7, 9),
+									labels = c("Great Stallion", "Lord of Light", "Faith of the Seven", "Old Gods", "Drowned God", "Many Faced God", "Other", "Unknown/Unclear"))
+got$social_status <- factor(got$social_status,
+											 levels = c(1, 2, 9),
+											 labels = c("Highborn", "Lowborn", "Unkown/Unclear"))
+got$allegiance_last <- factor(got$allegiance_last,
+											 levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9),
+											 labels = c("Stark", "Targaryen", "Night's Watch", "Lannister", "Greyjoy", "Bolton", "Frey", "Other", "Unknown/Unclear"))
+got$allegiance_switched <- factor(got$allegiance_switched,
+									levels = c(1, 2, 9),
+									labels = c("No", "Yes", "Unknown/Unclear"))
+got$dth_flag <- factor(got$dth_flag,
+											 levels = c(0, 1),
+											 labels = c("No", "Yes"))
+
+```
+
+## The Characters
+
+@tbl-one contains information on all of the 359 characters included in the data set. 
+
+<details>
+<summary><b>Click here to expand full character table table</b></summary>
+```{r}
+#| echo: false 
+#| label: tbl-one
+#| tbl-cap: "Total Character Description Table"
+#descriptive table
+got %>%
+	select(name, sex, religion, intro_season, dth_flag,
+				 dth_description, dth_season,
+				 exp_episode, social_status, allegiance_last,
+				 allegiance_switched, featured_episode_count) %>%
+	gt() %>%
+	cols_label(
+				 name = "Name",
+				 sex = "Sex",
+				 religion = "Religion",
+				 intro_season = "Season Character First Appeared",
+				 dth_flag = "Charactered Died During Show",
+				 dth_description = "Description of Death",
+				 dth_season = "Season Character Died In",
+				 exp_episode = "Number of Episodes Character Survived",
+				 social_status = "Social Status at Time of Death",
+				 allegiance_last = "Allegiance at Time of Death",
+				 allegiance_switched = "Switched Allegiance During the Show",
+				 featured_episode_count = "How Many Episodes Character Was Featured In"
+						)
+```
+</details>
+
+## Death by Characteristic 
+
+@tbl-two contains information on how many characters died (Yes) and how many survived (No) based on different characteristics. 
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tbl-two
+#| tbl-cap: "Death 'Yes or No' by Characteristics"
+tbl_summary(got,
+						include = c(sex, religion, social_status, allegiance_last, allegiance_switched),
+						by = dth_flag,
+						label = list(
+							sex ~ "Sex",
+							religion ~ "Religion",
+							social_status ~ "Social Status at Time of Death",
+							allegiance_last ~ "Allegiance at Time of Death",
+							allegiance_switched ~ "Switched Allegiance During the Show"
+						))
+
+table1 <- tbl_summary(got, include = dth_flag)
+table_1 <- tbl_summary(got, include = allegiance_last)
+```
+
+As would be expected for such a violent show, more characters die (n = `r sum(got$dth_flag == "Yes", na.rm = TRUE)` characters died (`r round(mean(got$dth_flag == "Yes", na.rm = TRUE) * 100, 1)`%) then survive (n = `r `r sum(got$dth_flag == "Yes", na.rm = TRUE)` characters died (`r round(mean(got$dth_flag == "No", na.rm = TRUE) * 100, 1)`%). And honestly, none of the statistics from @tbl-two were surprising. Like how every single Bolton dies (n = `r inline_text(table_1, variable = allegiance_last, level = "Bolton")`) (: 
+
+Now, lets see if there's any of these characteristics significantly influence a character's chance at survival. @tbl-three contains information from a multivariate logistic regression determining the effect of certain characteristics on a characters mortality while holding the others constant. Because several categories within religion or allegiance have small sample sizes or complete mortality/survival (e.g., zero deaths in a specific subgroup), standard logistic regression suffers from separation. Fitting the model using Firth’s penalized likelihood approach reduces small-sample bias and produces finite, reliable parameter estimates.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+got_labels <- function() {
+	list(
+		sex ~ "Sex",
+		religion ~ "Religion",
+		social_status ~ "Social Status at Time of Death",
+		allegiance_last ~ "Allegiance at Time of Death",
+		allegiance_switched ~ "Switched Allegiance During the Show"
+	)
+}
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tbl-three
+#| tbl-cap: "Penalized Logistic Regression of Characteristics on Death Status"
+#logistic regression
+library(gtsummary)
+library(logistf)
+fit_firth <- logistf(dth_flag ~ sex + religion + social_status + allegiance_last + allegiance_switched,
+											data = got
+)
+
+tbl_regression(
+	fit_firth,
+	exponentiate = TRUE,
+	label = got_labels()
+)
+
+reg_table <- tbl_regression(
+	fit_firth,
+	exponentiate = TRUE,
+	label = got_labels()
+)
+```
+
+There are many variables that are significantly associated with mortality. For instance, being in the Night's Watch at the time of death was significantly associated with death (`r inline_text(reg_table, variable = allegiance_last, level = "Night's Watch")`). Meaning members of the Night's Watch have 4.08 times the odds of dying than other allegiances. And this makes sense considering the Battle of Winterfell. 
+
+## Logistic Regression Visualization 
+@fig-forest shows the adjusted Odds Ratios (aOR) and 95% confidence intervals from the multivariable logistic regression model. 
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: fig-forest
+#| fig-cap: "Forest Plot of Odds Ratios (with 95% Confidence Intervals) for Each Religion and Odds of Death"
+library(ggplot2)
+library(broom)
+library(dplyr)
+
+model <- glm(dth_flag ~ religion, data = got, family = binomial)
+model_df <- tidy(model, exponentiate = TRUE, conf.int = TRUE) |>
+	filter(term != "(Intercept)") |>
+	mutate(term = stringr::str_remove(term, "religion"))
+
+ggplot(model_df, aes(x = estimate, y = reorder(term, estimate))) +
+	geom_vline(xintercept = 1, linetype = "dashed", color = "gray50") +
+	geom_pointrange(aes(xmin = conf.low, xmax = conf.high), color = "#8B0000", size = 0.8) +
+	scale_x_log10() +
+	labs(
+		title = "Mortality Risk by Religion in Westeros",
+		subtitle = "Odds Ratio > 1 indicates higher likelihood of death compared to baseline",
+		x = "Odds Ratio (Died vs. Survived, 95% CI)",
+		y = "Religion"
+	) +
+	theme_minimal()
+```

@@ -1,0 +1,60 @@
+/* Import medieval/fantasy Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fauna+One&display=swap');
+
+/* Main Page Styling */
+body {
+  font-family: 'Fauna One', serif;
+  background-color: #f4f1ea; /* Parchment background */
+  color: #1a1a1a;
+}
+
+/* Titles and Headings */
+h1, h2, h3, h4, .title {
+  font-family: 'Cinzel', serif;
+  color: #5a0000; /* Deep Targaryen Crimson */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #8c6d3b; /* Gold accent line */
+  padding-bottom: 4px;
+}
+
+/* Links */
+a {
+  color: #8c6d3b;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a:hover {
+  color: #5a0000;
+  text-decoration: underline;
+}
+
+/* Code Blocks */
+pre, code {
+  background-color: #2b2b2b !important;
+  color: #e6c687 !important; /* Gold text on dark slate */
+  border-radius: 4px;
+}
+
+/* Tables Styling */
+table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+table thead tr {
+  background-color: #5a0000 !important;
+  color: #ffffff !important;
+  font-family: 'Cinzel', serif;
+}
+
+table th, table td {
+  padding: 12px 15px;
+}
+
+table tbody tr:nth-of-type(even) {
+  background-color: #eae5d9;
+}
