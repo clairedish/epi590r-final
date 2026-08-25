@@ -58,3 +58,25 @@ tbl_summary(got,
 							allegiance_last ~ "Allegiance at Time of Death",
 							allegiance_switched ~ "Switched Allegiance During the Show"
 						))
+#function for labeling
+got_labels <- function() {
+	list(
+		sex ~ "Sex",
+		religion ~ "Religion",
+		social_status ~ "Social Status at Time of Death",
+		allegiance_last ~ "Allegiance at Time of Death",
+		allegiance_switched ~ "Switched Allegiance During the Show"
+	)
+}
+#logistic regression
+install.packages("logistf")
+library(logistf)
+fit_firth <- logistf(dth_flag ~ sex + religion + social_status + allegiance_last + allegiance_switched,
+											data = got
+)
+
+tbl_regression(
+	fit_firth,
+	exponentiate = TRUE,
+	label = got_labels()
+)
