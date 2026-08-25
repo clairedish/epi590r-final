@@ -80,3 +80,26 @@ tbl_regression(
 	exponentiate = TRUE,
 	label = got_labels()
 )
+
+#Plot
+library(ggplot2)
+library(broom)
+library(dplyr)
+
+model <- glm(dth_flag ~ religion, data = got, family = binomial)
+model_df <- tidy(model, exponentiate = TRUE, conf.int = TRUE) |>
+	filter(term != "(Intercept)") |>
+	mutate(term = stringr::str_remove(term, "religion"))
+
+ggplot(model_df, aes(x = estimate, y = reorder(term, estimate))) +
+	geom_vline(xintercept = 1, linetype = "dashed", color = "gray50") +
+	geom_pointrange(aes(xmin = conf.low, xmax = conf.high), color = "#8B0000", size = 0.8) +
+	scale_x_log10() +
+	labs(
+		title = "Mortality Risk by Religion in Westeros",
+		subtitle = "Odds Ratio > 1 indicates higher likelihood of death compared to baseline",
+		x = "Odds Ratio (Died vs. Survived, 95% CI)",
+		y = "Religion"
+	) +
+	theme_minimal()
+
