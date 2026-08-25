@@ -47,3 +47,14 @@ got %>%
 				 featured_episode_count = "How Many Episodes Character Was Featured In"
 						)
 
+#summary table looking at different characteristics and death
+tbl_summary(got,
+						include = c(sex, religion, social_status, allegiance_last, allegiance_switched),
+						by = dth_flag,
+						label = list(
+							sex ~ "Sex",
+							religion ~ "Religion",
+							social_status ~ "Social Status at Time of Death",
+							allegiance_last ~ "Allegiance at Time of Death",
+							allegiance_switched ~ "Switched Allegiance During the Show"
+						))
